@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+        <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hand.mapper.DoctorMapper">
+
+    <resultMap id="DoctorResultMap" type="com.hand.hand.domain.Doctor">
+        <result property="id" column="id"></result>
+        <result property="name" column="name"></result>
+        <result property="idnumber" column="id_number"></result>
+        <result property="practicenumber" column="practice_number"></result>
+        <result property="professionaltitle" column="professional_title"></result>
+        <result property="gender" column="gender"></result>
+        <result property="phone" column="phone"></result>
+        <result property="speciality" column="speciality"></result>
+        <result property="introduce" column="introduce"></result>
+        <result property="age" column="age"></result>
+        <result property="introduce" column="introduce"></result>
+        <association property="department" javaType="com.hand.hand.domain.Department">
+              <result column="did" property="did"></result>
+              <result column="dname" property="dname"></result>
+        </association>
+    </resultMap>
+
+    <!-- 查询所有医生信息-->
+    <select id="findAllDoctor" resultMap="DoctorResultMap">
+           select DISTINCT do.id,do.name,id_number,practice_number,professional_title,gender,phone,speciality,do.introduce,age,dept.dname
+           from  doctor do,
+            (SELECT hosdept.id as did ,dept.dname,hosdept.introduce,hosdept.hid
+             FROM departments dept,hospitaldepartment hosdept
+             WHERE hosdept.did=dept.did AND hosdept.hid=#{hid}) as dept
+          WHERE do.did=dept.did
+    </select>
+
+    <!-- 根据医生id查询医生信息-->
+    <select id="getDoctorByDid" resultMap="DoctorResultMap">
+       select DISTINCT doc.id,doc.name,id_number,practice_number,professional_title,gender,phone,speciality,doc.introduce,age,dept.did,dept.dname
+       FROM doctor doc
+       Left JOIN  (SELECT hosdept.id as did ,dept.dname,hosdept.introduce,hosdept.hid
+             FROM departments dept,hospitaldepartment hosdept
+             WHERE hosdept.did=dept.did) as dept
+       ON doc.did=dept.did
+       WHERE doc.id=#{did}
+    </select>
+
+    <!-- 添加单个医生信息-->
+    <insert id="addDoctor" useGeneratedKeys="true" keyProperty="did">
+        INSERT INTO doctor(name,id_number,practice_number,professional_title,gender,phone,speciality,introduce,age,did)
+        VALUES(#{name},#{idnumber},#{practicenumber},#{professionaltitle},#{gender},#{phone},#{speciality},#{introduce},#{age},#{department.did})
+    </insert>
+
+    <!--根据id删除医生信息-->
+    <delete id="deleteDoctor">
+       DELETE FROM  doctor WHERE id=#{id}
+    </delete>
+
+    <!-- 编辑单个医生信息-->
+    <update id="editDoctor">
+        UPDATE doctor
+        <set>  <!--  //方法一：使用set标签去掉多余的，号 -->
+            <if test="name!=null">
+                name=#{name},
+            </if>
+            <if test="idnumber!=null">
+                id_number=#{idnumber},
+            </if>
+            <if test="practicenumber!=null">
+                practice_number=#{practicenumber},
+            </if>
+            <if test="professionaltitle!=null">
+                professional_title=#{professionaltitle},
+            </if>
+            <if test="gender!=null">
+                gender=#{gender},
+            </if>
+            <if test="phone!=null">
+                phone=#{phone},
+            </if>
+            <if test="speciality!=null">
+                speciality=#{speciality},
+            </if>
+            <if test="introduce!=null">
+                introduce=#{introduce},
+            </if>
+            <if test="age!=null">
+                age=#{age},
+            </if>
+            <if test="department.did!=null">
+                did=#{department.did}
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+
+    <!-- 根据id,name,idnumber,practicenumber,professionaltitle,gender,phone,speciality,introduce,age等医生字段,模糊查询医生信息-->
+    <select id="getDoctorLike" resultType="com.hand.hand.domain.Doctor">
+        <bind name="bindselectword" value="'%'+selectword+'%'"></bind>
+        SELECT *
+        FROM doctor
+        <if test="selectword!=null">
+            where id=cast(#{selectword} as signed INTEGER ) OR  name like #{bindselectword}
+            OR  id_number like #{bindselectword} OR practice_number like #{bindselectword} OR professional_title like #{bindselectword}
+            OR gender like #{bindselectword} OR phone like #{bindselectword} OR speciality like #{bindselectword} OR introduce like #{bindselectword}
+            OR age like #{bindselectword}
+        </if>
+    </select>
+
+
+
+
+
+
+
+
+</mapper>

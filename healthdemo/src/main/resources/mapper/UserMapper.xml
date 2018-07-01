@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+        <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hand.mapper.UserMapper">
+    <resultMap id="UserMap" type="com.hand.hand.domain.User">
+        <result property="id" column="id"></result>
+        <result property="name" column="name"></result>
+        <result property="phone" column="phone"></result>
+        <result property="gender" column="gender"></result>
+        <result property="telephone" column="telephone"></result>
+        <result property="address" column="address"></result>
+        <result property="enabled" column="enabled"></result>
+        <result property="username" column="username"></result>
+        <result property="hid" column="hid"></result>
+        <result property="hname" column="hname"></result>
+        <!--<result property="role.id" column="rid"></result>
+        <result property="role.name" column="rname"></result>-->
+        <association property="role"
+                     select="com.hand.hand.mapper.UserMapper.findRolById"
+        column="rid">
+        </association>
+    </resultMap>
+
+
+    <!-- 验证用户是否正确-->
+    <select id="validateUser" resultMap="UserMap">
+        select *  from  user
+        where
+        <if test="username!=null">
+                username=#{username}
+        </if>
+        <if test="username!=null">
+              and password=#{password}
+        </if>
+    </select>
+
+  <!--  查询所有系统管理用户（暂时为医院系统管理院）-->
+   <select id="findAllSystemManagerUser" resultMap="UserMap">
+             SELECT  user.id, user.`name`,hname,role.rid,phone,telephone,address,enabled,username
+       FROM role,hr_role,
+       (select id,name,hospital.hname,phone,telephone,hr.address,enabled,username,`password`,userface,remark
+          from  hr,hospital
+          where hr.hid=hospital.hid
+       ) as user
+      WHERE role.rid=hr_role.rid and user.id=hr_role.hrid AND (role.nameZh="总系统管理员" OR role.nameZh="医院管理员")
+   </select>
+
+
+   <!-- 根据id查询角色信息-->
+    <select id="findRolById" resultType="com.hand.hand.domain.Role">
+         SELECT *
+         from role
+         WHERE rid=#{rid}
+    </select>
+
+    <!-- 添加单个系统用户信息-->
+    <insert id="addUser" useGeneratedKeys="true" keyProperty="id">
+          INSERT INTO hr(name,gender,phone,telephone,address,enabled,username,hid)
+          VALUES(#{name},#{gender},#{phone},#{telephone},#{address},#{enabled},#{username},#{hid})
+    </insert>
+
+    <!-- 查询所有角色信息-->
+    <select id="findAllUserRole" resultType="com.hand.hand.domain.Role">
+                select *
+                from  role
+                where nameZh="医院管理员" OR nameZh="总系统管理员"
+    </select>
+
+    <!-- 将用户角色表插入数据-->
+    <insert id="addUserRole">
+        INSERT INTO hr_role(hrid,rid)
+        VALUES(#{hrid},#{rid})
+    </insert>
+
+   <!--  根据id查询系统用户信息-->
+    <select id="getUserById" resultMap="UserMap">
+       SELECT  user.id, user.`name`,hname,role.rid,phone,telephone,address,enabled,username
+       FROM role,hr_role,
+       (select id,name,hospital.hname,phone,telephone,hr.address,enabled,username,`password`,userface,remark
+          from  hr,hospital
+          where hr.hid=hospital.hid
+       ) as user
+      WHERE role.rid=hr_role.rid and user.id=hr_role.hrid AND (role.nameZh="总系统管理员" OR role.nameZh="医院管理员")
+       AND user.id=#{id}
+    </select>
+
+    <!-- 编辑单个医生信息-->
+    <update id="editUser">
+        UPDATE hr
+        <set>  <!--  //方法一：使用set标签去掉多余的，号 -->
+            <if test="name!=null">
+                name=#{name},
+            </if>
+            <if test="gender!=null">
+                gender=#{gender},
+            </if>
+            <if test="hid!=null">
+                hid=#{hid},
+            </if>
+            <if test="phone!=null">
+                phone=#{phone},
+            </if>
+            <if test="telephone!=null">
+                telephone=#{telephone},
+            </if>
+            <if test="address!=null">
+                address=#{address},
+            </if>
+            <if test="enabled!=null">
+                enabled=#{enabled},
+            </if>
+            <if test="username!=null">
+                username=#{username}
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+
+    <!-- 编辑用户角色表信息(一个用户只有一个角色)-->
+    <update id="editUserRole">
+        UPDATE hr_role
+        <set>  <!--  //方法一：使用set标签去掉多余的，号 -->
+            <if test="rid!=null">
+                rid=#{rid}
+            </if>
+        </set>
+        where hrid=#{hrid}
+    </update>
+
+    <!--根据id删除医生信息-->
+    <delete id="deleteUser">
+        DELETE FROM  hr WHERE id=#{id}
+    </delete>
+
+    <!-- 根据name,username,hname字段,模糊查询户系统信息-->
+    <select id="getUserLike" resultMap="UserMap">
+        <bind name="bindselectword" value="'%'+selectword+'%'"></bind>
+        SELECT  user.id, user.`name`,hname,role.rid,phone,telephone,address,enabled,username
+        FROM role,hr_role,
+        (select id,name,hospital.hname,phone,telephone,hr.address,enabled,username,`password`,userface,remark
+        from  hr,hospital
+        where hr.hid=hospital.hid
+        ) as user
+        <if test="selectword!=null">
+            WHERE role.rid=hr_role.rid and user.id=hr_role.hrid AND (role.nameZh="总系统管理员" OR role.nameZh="医院管理员")
+            AND (user.name like #{bindselectword}
+            OR  username like #{bindselectword} OR hname like #{bindselectword})
+        </if>
+    </select>
+</mapper>

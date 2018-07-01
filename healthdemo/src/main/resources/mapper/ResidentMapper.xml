@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hand.mapper.ResidentMapper">
+
+
+    <!--  查询居民各年龄段的人数比例-->
+    <select id="findResidentproportionByAge" resultType="com.hand.hand.domain.Chartdata">
+        select ageproportion as name,count(*) as value from
+        (
+        SELECT
+        CASE
+        when age>0 and age&lt;=10 then '0-10岁'
+        when age>10 and age&lt;=20 then '10-20岁'
+        when age>20 and age&lt;=30 then '20-30岁'
+        when age>30 and age&lt;=40 then '30-40岁'
+        when age>40 and age&lt;=50 then '40-50岁'
+        when age>50 and age&lt;=60 then '50-60岁'
+        else '60岁以上'
+
+        END
+        as ageproportion from (
+        SELECT DISTINCT re.pid,age
+        FROM resident re,treatmenthistory th
+        WHERE re.pid=th.resident_id
+        AND th.doctor_id in(
+        select DISTINCT do.id
+        from  doctor do,
+        (SELECT hosdept.id as did ,dept.dname,hosdept.introduce,hosdept.hid
+        FROM departments dept,hospitaldepartment hosdept
+        WHERE hosdept.did=dept.did AND hosdept.hid=101) as dept
+        WHERE do.did=dept.did
+        )
+
+        )resident
+        )a GROUP BY ageproportion
+    </select>
+
+    <!-- 查询医院近年就诊人数-->
+    <select id="findResidentnumberByTime" resultType="com.hand.hand.domain.Chartdata">
+  SELECT year as name,COUNT(pid) as value
+  FROM(
+       SELECT re.pid,th.doctor_id,year(time) as year
+        FROM resident re,treatmenthistory th
+        WHERE re.pid=th.resident_id
+        AND th.doctor_id in(
+        select DISTINCT do.id
+        from  doctor do,
+          (SELECT hosdept.id as did ,dept.dname,hosdept.introduce,hosdept.hid
+           FROM departments dept,hospitaldepartment hosdept
+           WHERE hosdept.did=dept.did AND hosdept.hid=101
+           ) as dept
+        WHERE do.did=dept.did
+        )
+      ) as residentnumberbytime
+  GROUP BY year
+    </select>
+
+</mapper>

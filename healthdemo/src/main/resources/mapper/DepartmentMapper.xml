@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+        <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hand.mapper.DepartmentMapper">
+
+
+    <!-- 添加单个科室信息-->
+    <insert id="addDepartment" useGeneratedKeys="true" keyProperty="did">
+        INSERT INTO hospitaldepartment(
+             <include refid="insertColumn"></include>
+        )
+        VALUES(#{hid},#{did},#{introduce})
+     </insert>
+
+        <!--sql插入列片段的抽取-->
+    <sql id="insertColumn">
+           hid,did,introduce
+     </sql>
+
+    <!-- 根据id查询科室信息-->
+    <select id="getDepartmentByDid" resultType="com.hand.hand.domain.Department">
+          SELECT hosdept.id as did ,dept.dname,hosdept.introduce,hosdept.hid
+          FROM departments dept,hospitaldepartment hosdept
+          WHERE hosdept.did=dept.did AND hosdept.id=#{id}
+    </select>
+
+    <!-- 编辑单个医院信息-->
+    <update id="editDepartment">
+        UPDATE hospitaldepartment
+        <set>  <!--  //方法一：使用set标签去掉多余的，号 -->
+            <if test="introduce!=null">
+                introduce=#{introduce}
+            </if>
+        </set>
+        where id=#{did}
+    </update>
+
+    <!--根据id删除医院信息-->
+    <delete id="deleteDepartment">
+        DELETE FROM  hospitaldepartment WHERE id=#{did}
+    </delete>
+
+    <!--  根据did,danme,introduce,模糊查询科室信息-->
+    <select id="getDepartmentLike" resultType="com.hand.hand.domain.Department">
+        <bind name="bindselectword" value="'%'+selectword+'%'"></bind>
+        SELECT hosdept.id as did,dept.dname,hosdept.introduce,hosdept.hid
+        FROM departments dept,hospitaldepartment hosdept
+        <if test="selectword!=null">
+        WHERE (id=#{selectword} OR  dname like #{bindselectword}
+            OR  introduce like #{bindselectword})
+            AND hosdept.did=dept.did AND hosdept.hid=#{hid}
+        </if>
+    </select>
+
+    <!-- 查询医院包含的所有科室名称集合-->
+    <select id="getDepartmentDnamelist" resultType="com.hand.hand.domain.Department">
+         select *  from departments
+    </select>
+
+    <!--查询医院包含的所有科室名称集合通过医院(hid)-->
+    <select id="getDepartmentDnamelistByHid" resultType="com.hand.hand.domain.Department">
+          SELECT hosdept.id as did ,dept.dname,hosdept.introduce,hosdept.hid
+          FROM departments dept,hospitaldepartment hosdept
+          WHERE hosdept.did=dept.did AND hosdept.hid=#{hid}
+    </select>
+
+
+
+</mapper>

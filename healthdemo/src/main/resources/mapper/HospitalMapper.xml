@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hand.mapper.HospitalMapper">
+    <resultMap id="HospitalResultMap" type="com.hand.hand.domain.Hospital">
+           <result property="hid" column="hid"></result>
+           <result property="hname" column="hname"></result>
+           <result property="grade" column="grade"></result>
+           <result property="address" column="address"></result>
+           <result property="longitude" column="longitude"></result>
+           <result property="latitude" column="latitude"></result>
+           <result property="introduce" column="introduce"></result>
+           <result property="picture" column="picture"></result>
+          <collection property="departmentList" ofType="com.hand.hand.domain.Department">
+                <id property="did" column="did"></id>
+                <result property="dname" column="deptname"></result>
+                <result property="introduce" column="deptintroduce"></result>
+                <result property="hid" column="hid"></result>
+          </collection>
+    </resultMap>
+
+   <!-- 查询所有医院信息-->
+    <select id="findAllHospital" resultType="com.hand.hand.domain.Hospital">
+     select *  from  hospital
+    </select>
+
+   <!--  根据hid,hanme,grade,模糊查询医院信息-->
+    <select id="getHospitalLike" resultType="com.hand.hand.domain.Hospital">
+        <bind name="bindselectword" value="'%'+selectword+'%'"></bind>
+        SELECT *
+        FROM hospital
+        <if test="selectword!=null">
+        where hid=cast(#{selectword} as signed INTEGER ) OR  hname like #{bindselectword}
+        OR  grade like #{bindselectword}
+        </if>
+    </select>
+
+
+   <!-- 添加单个医院信息-->
+    <insert id="addHospital" useGeneratedKeys="true" keyProperty="hid">
+        INSERT INTO hospital(hname,grade,address,longitude,latitude,introduce,picture)
+        VALUES(#{hname},#{grade},#{address},#{longitude},#{latitude},#{introduce},#{picture})
+    </insert>
+
+   <!-- 根据id查询医院信息-->
+    <select id="getHospitalByHid" resultType="com.hand.hand.domain.Hospital">
+            select *
+            from  hospital
+            WHERE hid=#{hid}
+    </select>
+
+    <!-- 编辑单个医院信息-->
+    <update id="editHospital">
+        UPDATE hospital
+        <set>  <!--  //方法一：使用set标签去掉多余的，号 -->
+            <if test="hname!=null">
+                hname=#{hname},
+            </if>
+            <if test="grade!=null">
+                grade=#{grade},
+            </if>
+            <if test="address!=null">
+                address=#{address},
+            </if>
+            <if test="longitude!=null">
+                longitude=#{longitude},
+            </if>
+            <if test="latitude!=null">
+                latitude=#{latitude},
+            </if>
+            <if test="introduce!=null">
+                introduce=#{introduce},
+            </if>
+            <if test="picture!=null">
+                picture=#{picture}
+            </if>
+        </set>
+         where hid=#{hid}
+    </update>
+
+    <!--根据id删除医院信息-->
+    <delete id="deleteHospital">
+        DELETE FROM  hospital WHERE hid=#{hid}
+    </delete>
+
+    <!-- 根据id查询对应的所有科室信息-->
+    <select id="findAllDepartmentByHid" resultType="com.hand.hand.domain.Department">
+       SELECT hosdept.id as did,dept.dname,hosdept.introduce,hosdept.hid
+       FROM departments dept,hospitaldepartment hosdept
+       WHERE hosdept.did=dept.did AND hosdept.hid=#{hid}
+    </select>
+
+
+    <!-- 查询医院各等级个数比例-->
+    <select id="findHospitalnumberByGrade" resultType="com.hand.hand.domain.Chartdata">
+     SELECT grade as name,COUNT(hid) as value
+     FROM hospital
+     GROUP BY grade
+    </select>
+
+</mapper>
