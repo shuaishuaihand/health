@@ -1,0 +1,7 @@
+本项目为本人，毕设项目，采用前后端分离开发
+hrserver 为权限管理，后台springboot
+healthdemo 为后台业务接口，springboot
+vuehr 为前端Vue.js项目
+系统管理员账号 nishuai 123
+权限控制框架借鉴博客：https://mp.weixin.qq.com/s/lpznrVx6Bh9X7ZnunrWQSA
+论文详细文档，暂时没有上传到githhub,存放在本人百度云中
